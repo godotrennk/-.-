@@ -1,0 +1,118 @@
+
+
+Второй способ
+нельзя поделиться ссылкой. То есть, пользователь зашел на наш сайт, выбрал категорию и бренд, перешел на вторую страницу, увидел что-то интересное — и решил поделиться ссылкой. Но эта ссылка будет иметь вид http://server.com — нет выбранной категории, выбранного бренда и номера страницы. Нам надо добавлять в адресную строку браузера GET-параметры, чтобы можно было восстановить состояние.
+
+import { ListGroup } from 'react-bootstrap'
+import { useContext } from 'react'
+import { AppContext } from './AppContext.js'
+import { observer } from 'mobx-react-lite'
+import { useNavigate, createSearchParams } from 'react-router-dom'
+
+const CategoryBar = observer(() => {
+    const { catalog } = useContext(AppContext)
+    const navigate = useNavigate()
+
+    const handleClick = (id) => {
+        if (id === catalog.category) {
+            catalog.category = null
+        } else {
+            catalog.category = id
+        }
+        // при каждом клике добавляем в историю браузера новый элемент
+        const params = {}
+        if (catalog.category) params.category = catalog.category
+        if (catalog.brand) params.brand = catalog.brand
+        if (catalog.page > 1) params.page = catalog.page
+        navigate({
+            pathname: '/',
+            search: '?' + createSearchParams(params),
+        })
+    }
+
+    return (
+        <ListGroup>
+            {catalog.categories.map(item =>
+                <ListGroup.Item
+                    key={item.id}
+                    active={item.id === catalog.category}
+                    onClick={() => handleClick(item.id)}
+                    style={{cursor: 'pointer'}}
+                >
+                    {item.name}
+                </ListGroup.Item>
+            )}
+        </ListGroup>
+    )
+})
+
+export default CategoryBarКопировать
+import { ListGroup } from 'react-bootstrap'
+import { useContext } from 'react'
+import { AppContext } from './AppContext.js'
+import { observer } from 'mobx-react-lite'
+import { useNavigate, createSearchParams } from 'react-router-dom'
+
+const BrandBar = observer(() => {
+    const { catalog } = useContext(AppContext)
+    const navigate = useNavigate()
+
+    const handleClick = (id) => {
+        if (id === catalog.brand) {
+            catalog.brand = null
+        } else {
+            catalog.brand = id
+        }
+        // при каждом клике добавляем в историю браузера новый элемент
+        const params = {}
+        if (catalog.category) params.category = catalog.category
+        if (catalog.brand) params.brand = catalog.brand
+        if (catalog.page > 1) params.page = catalog.page
+        navigate({
+            pathname: '/',
+            search: '?' + createSearchParams(params),
+        })
+    }
+
+    return (
+        <ListGroup horizontal>
+            {catalog.brands.map(item =>
+                <ListGroup.Item
+                    key={item.id}
+                    active={item.id === catalog.brand}
+                    onClick={() => handleClick(item.id)}
+                    style={{cursor: 'pointer'}}
+                >
+                    {item.name}
+                </ListGroup.Item>
+            )}
+        </ListGroup>
+    )
+})
+
+export default BrandBarКопировать
+import { Container, Row, Col, Spinner } from 'react-bootstrap'
+import CategoryBar from '../components/CategoryBar.js'
+import BrandBar from '../components/BrandBar.js'
+import ProductList from '../components/ProductList.js'
+import { useContext, useEffect, useState } from 'react'
+import { AppContext } from '../components/AppContext.js'
+import { fetchCategories, fetchBrands, fetchAllProducts } from '../http/catalogAPI.js'
+import { observer } from 'mobx-react-lite'
+import { useLocation, useSearchParams } from 'react-router-dom'
+
+const getSearchParams = (searchParams) => {
+    let category = searchParams.get('category')
+    if (category && /[1-9][0-9]*/.test(category)) {
+        category = parseInt(category)
+    }
+    let brand = searchParams.get('brand')
+    if (brand && /[1-9][0-9]*/.test(brand)) {
+        brand = parseInt(brand)
+    }
+    let page = searchParams.get('page')
+    if (page && /[1-9][0-9]*/.test(page)) {
+        page = parseInt(page)
+    }
+
+    return {category, brand, page}
