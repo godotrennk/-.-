@@ -1,0 +1,159 @@
+
+from PIL import Image
+from diffusers import AutoencoderKLHunyuanVideo
+from transformers import LlamaModel, CLIPTextModel, LlamaTokenizerFast, CLIPTokenizer
+from diffusers_helper.hunyuan import encode_prompt_conds, vae_decode, vae_encode, vae_decode_fake
+from diffusers_helper.utils import save_bcthw_as_mp4, crop_or_pad_yield_mask, soft_append_bcthw, resize_and_center_crop, state_dict_weighted_merge, state_dict_offset_merge, generate_timestamp
+from diffusers_helper.models.hunyuan_video_packed import HunyuanVideoTransformer3DModelPacked
+from diffusers_helper.pipelines.k_diffusion_hunyuan import sample_hunyuan
+from diffusers_helper.memory import cpu, gpu, get_cuda_free_memory_gb, move_model_to_device_with_memory_preservation, offload_model_from_device_for_memory_preservation, fake_diffusers_current_device, DynamicSwapInstaller, unload_complete_models, load_model_as_complete
+from diffusers_helper.thread_utils import AsyncStream, async_run
+from diffusers_helper.gradio.progress_bar import make_progress_bar_css, make_progress_bar_html
+from transformers import SiglipImageProcessor, SiglipVisionModel
+from diffusers_helper.clip_vision import hf_clip_vision_encode
+
+19
+
+text_encoder = LlamaModel.from_pretrained("hunyuanvideo-community/HunyuanVideo", subfolder='text_encoder', torch_dtype=torch.float16).cpu()
+text_encoder_2 = CLIPTextModel.from_pretrained("hunyuanvideo-community/HunyuanVideo", subfolder='text_encoder_2', torch_dtype=torch.float16).cpu()
+tokenizer = LlamaTokenizerFast.from_pretrained("hunyuanvideo-community/HunyuanVideo", subfolder='tokenizer')
+tokenizer_2 = CLIPTokenizer.from_pretrained("hunyuanvideo-community/HunyuanVideo", subfolder='tokenizer_2')
+vae = AutoencoderKLHunyuanVideo.from_pretrained("hunyuanvideo-community/HunyuanVideo", subfolder='vae', torch_dtype=torch.float16).cpu(
+
+12 
+from diffusers_helper.hf_login import login
+
+import os
+
+os.environ['HF_HOME'] = os.path.abspath(os.path.realpath(os.path.join(os.path.dirname(__file__), './hf_download')))
+
+import gradio as gr
+import torch
+import traceback
+import einops
+import safetensors.torch as sf
+import numpy as np
+import argparse
+import math
+
+from PIL import Image
+from diffusers import AutoencoderKLHunyuanVideo
+from transformers import LlamaModel, CLIPTextModel, LlamaTokenizerFast, CLIPTokenizer
+from diffusers_helper.hunyuan import encode_prompt_conds, vae_decode, vae_encode, vae_decode_fake
+from diffusers_helper.utils import save_bcthw_as_mp4, crop_or_pad_yield_mask, soft_append_bcthw, resize_and_center_crop, state_dict_weighted_merge, state_dict_offset_merge, generate_timestamp
+from diffusers_helper.models.hunyuan_video_packed import HunyuanVideoTransformer3DModelPacked
+from diffusers_helper.pipelines.k_diffusion_hunyuan import sample_hunyuan
+from diffusers_helper.memory import cpu, gpu, get_cuda_free_memory_gb, move_model_to_device_with_memory_preservation, offload_model_from_device_for_memory_preservation, fake_diffusers_current_device, DynamicSwapInstaller, unload_complete_models, load_model_as_complete
+from diffusers_helper.thread_utils import AsyncStream, async_run
+from diffusers_helper.gradio.progress_bar import make_progress_bar_css, make_progress_bar_html
+from transformers import SiglipImageProcessor, SiglipVisionModel
+from diffusers_helper.clip_vision import hf_clip_vision_encode
+from diffusers_helper.bucket_tools import find_nearest_bucket
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--share', action='store_true')
+parser.add_argument("--server", type=str, default='0.0.0.0')
+parser.add_argument("--port", type=int, required=False)
+parser.add_argument("--inbrowser", action='store_true')
+args = parser.parse_args()
+
+# for win desktop probably use --server 127.0.0.1 --inbrowser
+# For linux server probably use --server 127.0.0.1 or do not use any cmd flags
+
+print(args)
+
+free_mem_gb = get_cuda_free_memory_gb(gpu)
+high_vram = free_mem_gb > 60
+
+print(f'Free VRAM {free_mem_gb} GB')
+print(f'High-VRAM Mode: {high_vram}')
+
+text_encoder = LlamaModel.from_pretrained("hunyuanvideo-community/HunyuanVideo", subfolder='text_encoder', torch_dtype=torch.float16).cpu()
+text_encoder_2 = CLIPTextModel.from_pretrained("hunyuanvideo-community/HunyuanVideo", subfolder='text_encoder_2', torch_dtype=torch.float16).cpu()
+tokenizer = LlamaTokenizerFast.from_pretrained("hunyuanvideo-community/HunyuanVideo", subfolder='tokenizer')
+tokenizer_2 = CLIPTokenizer.from_pretrained("hunyuanvideo-community/HunyuanVideo", subfolder='tokenizer_2')
+vae = AutoencoderKLHunyuanVideo.from_pretrained("hunyuanvideo-community/HunyuanVideo", subfolder='vae', torch_dtype=torch.float16).cpu()
+
+feature_extractor = SiglipImageProcessor.from_pretrained("lllyasviel/flux_redux_bfl", subfolder='feature_extractor')
+image_encoder = SiglipVisionModel.from_pretrained("lllyasviel/flux_redux_bfl", subfolder='image_encoder', torch_dtype=torch.float16).cpu()
+
+transformer = HunyuanVideoTransformer3DModelPacked.from_pretrained('lllyasviel/FramePackI2V_HY', torch_dtype=torch.bfloat16).cpu()
+
+vae.eval()
+text_encoder.eval()
+text_encoder_2.eval()
+image_encoder.eval()
+transformer.eval()
+
+if not high_vram:
+    vae.enable_slicing()
+    vae.enable_tiling()
+
+transformer.high_quality_fp32_output_for_inference = True
+print('transformer.high_quality_fp32_output_for_inference = True')
+
+transformer.to(dtype=torch.bfloat16)
+vae.to(dtype=torch.float16)
+image_encoder.to(dtype=torch.float16)
+
+
+
+
+
+sluh 
+Codrr dsspotif;ly ccer 
+vae.to(dtype=torch.float16)
+image_encoder.to(dtype=torch.float16)
+text_encoder.to(dtype=torch.float16)
+text_encoder_2.to(dtype=torch.float16)
+
+vae.requires_grad_(False)
+text_encoder.requires_grad_(False)
+text_encoder_2.requires_grad_(False)
+image_encoder.requires_grad_(False)
+transformer.requires_grad_(False)
+
+if not high_vram:
+    # DynamicSwapInstaller is same as huggingface's enable_sequential_offload but 3x faster
+    DynamicSwapInstaller.install_model(
+
+
+
+
+
+
+
+
+
+
+reactibe 
+vae.to(gpu)
+    transformer.to(gpu)
+
+stream = AsyncStream()
+
+outputs_folder = './outputs/'
+os.makedirs(outputs_folder, exist_ok=True)
+
+tal_latent_sections = (total_second_length * 30) / (latent_window_size * 4)
+    total_latent_sections = int(max(round(total_latent_sections), 1))
+
+    job_id = generate_timestamp()
+tal_latent_sections = (total_second_length * 30) / (latent_window_size * 4)
+    total_latent_sections = int(max(round(total_latent_sections), 1))
+
+    job_id = generate_timestamp()
+    llama_vec, llama_attention_mask = crop_or_pad_yield_mask(llama_vec, length=512)
+        llama_vec_n, llama_attention_mask_n = crop_or_pad_yield_mask(llama_vec_n, length=512)
+
+        # Processing input image
+
+        stream.output_queue.push(('progress', (None, '', make_progress_bar_html(0, 'Image processing ...'))))
+
+        H, W, C = input_image.shape
+        height, width = find_nearest_bucket(H, W, resolution=640)
+        input_image_np = resize_and_center_crop(input_image, target_width=width, target_height=height)
+
+        Image.fromarray(input_image_np).save(os.path.join(outputs_folder, f'{job_id}.png'))
+
