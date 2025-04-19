@@ -1,0 +1,153 @@
+diffusers==0.33.341
+transformers==4.46.12
+gradio==5.23.0
+sentencepiece==0.122.0
+pillow==11.1.0
+av==12.1.4*((0
+numpy==1.26.232
+scipy==1.12.0
+requests==2.31.0
+torchsde==0.2.6
+
+einops
+opencv-contrib-python
+safetensors
+
+
+  pot 
+Скопируйте это приглашение:
+
+The girl dances gracefully, with clear movements, full of charm.
+
+Установите вот так:
+
+Вы получите это: 
+
+Теперь включите teacache:
+
+изображение
+
+Примерно 30% пользователей получат следующее (остальные 70% получат другие случайные результаты в зависимости от своего оборудования):
+
+ 2 тайник.mp4 
+Типичный худший результат.
+Таким образом, вы можете видеть, что кэширование не является на самом деле безрисковым и иногда может сильно повлиять на результат.
+
+Мы рекомендуем использовать метод «чайного пакетика», чтобы опробовать идеи, а затем использовать полный процесс диффузии для получения высококачественных результатов.
+
+Эта рекомендация также применима к Sage-Attention, bnb Quant, gguf и т. д. и т. п.
+
+Изображение с точностью до 1 минуты
+
+The girl dances gracefully, with clear movements, full of charm.
+
+изображение
+
+Set video length to 60 seconds:
+
+image
+
+If everything is in order you will get some result like this eventually.
+
+60s version:
+
+ 3.mp4 
+Video may be compressed by GitHub
+6s version:
+
+ 7.mp4 
+Video may be compressed by GitHub
+More Examples
+Many more examples are in Project Page.
+
+Below are some more examples that you may be interested in reproducing.
+
+
+The girl dances gracefully, with clear movements, full of charm.
+
+image
+
+ 4.mp4 
+Video may be compressed by GitHub
+
+The girl suddenly took out a sign that said “cute” using right hand
+
+image
+
+ 5.mp4 
+Video may be compressed by GitHub
+
+The girl skateboarding, repeating the endless spinning and dancing and jumping on a skateboard, with clear movements, full of charm.
+
+image
+
+ 6.mp4 
+Video may be compressed by GitHub
+
+The girl dances gracefully, with clear movements, full of charm.
+
+image
+
+ 8.mp4 
+Video may be compressed by GitHub
+
+The man dances flamboyantly, swinging his hips and striking bold poses with dramatic flair.
+
+image
+
+ 9.mp4 
+Video may be compressed by GitHub
+
+The woman dances elegantly among the blossoms, spinning slowly with flowing sleeves and graceful hand movements.
+
+image
+
+ 10.mp4 
+Video may be compressed by GitHub
+
+The young man writes intensely, flipping papers and adjusting his glasses with swift, focused movements.
+
+image
+
+ 11.mp4 
+Video may be compressed by GitHub
+Prompting Guideline
+Many people would ask how to write better prompts.
+
+Below is a ChatGPT template that I personally often use to get prompts:
+
+You are an assistant that writes short, motion-focused prompts for animating images.
+
+When the user sends an image, respond with a single, concise prompt describing visual motion (such as human activity, moving objects, or camera movements). Focus only on how the scene could come alive and become dynamic using brief phrases.
+
+Larger and more dynamic motions (like dancing, jumping, running, etc.) are preferred over smaller or more subtle ones (like standing still, sitting, etc.).
+
+Describe subject, then motion, then other things. For example: "The girl dances gracefully, with clear movements, full of charm."
+
+If there is something that can dance (like a man, girl, robot, etc.), then prefer to describe it as dancing.
+
+Stay in a loop: one image in, one motion prompt out. Do not explain, ask questions, or generate multiple options.
+You paste the instruct to ChatGPT and then feed it an image to get prompt like this:
+
+image
+
+The man dances powerfully, striking sharp poses and gliding smoothly across the reflective floor.
+
+Usually this will give you a prompt that works well.
+
+You can also write prompts yourself. Concise prompts are usually preferred, for example:
+
+The girl dances gracefully, with clear movements, full of charm.
+
+The man dances powerfully, with clear movements, full of energy.
+
+and so on.
+
+Cite
+@article{zhang2025framepack,
+    title={Packing Input Frame Contexts in Next-Frame Prediction Models for Video Generation},
+    author={Lvmin Zhang and Maneesh Agrawala},
+    journal={Arxiv},
+    year={2025}
+}
+FramePack/README.md at main · lllyasviel/FramePack
